@@ -1,0 +1,17 @@
+# Default: app -> Azure SQL (set DB_* in .env).  Local dev DB:  docker compose --profile local up
+services:
+  app:
+    build: .
+    ports: ["8080:8080"]
+    env_file: .env
+    depends_on:
+      mssql:
+        condition: service_started
+        required: false
+  mssql:
+    profiles: ["local"]
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Str0ng!Passw0rd"
+    ports: ["1433:1433"]

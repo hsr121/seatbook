@@ -1,0 +1,87 @@
+spring:
+  application:
+    name: seatbook
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    # jdbc:sqlserver://<server>.database.windows.net:1433;database=seatbook;encrypt=true;loginTimeout=60;
+    #   connectRetryCount=3;connectRetryInterval=10;useBulkCopyForBatchInsert=true;sendStringParametersAsUnicode=false
+    url: jdbc:sqlserver://harshal-personal.database.windows.net:1433;database=free-sql-db-2009226;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+    username: hsr121@harshal-personal
+    password: Harshal@123
+    hikari:
+      maximum-pool-size: 20        # small on purpose
+      connection-timeout: 60000    # waiting is fine, latency isn't a concern
+      minimum-idle: 10             # fixed-size pool, no cold connects mid-burst
+      max-lifetime: 1500000        # recycle before Azure idle/gateway kills
+      keepalive-time: 120000
+      auto-commit: false           # with provider_disables_autocommit below: no SET IMPLICIT_TRANSACTIONS round trips per tx
+  jpa:
+    open-in-view: false          # important: never hold a connection through serialization / slow work
+    hibernate:
+      ddl-auto: none             # Flyway owns the schema
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 50   # softens N+1 (no associations mapped today; guard rail)
+        connection:
+          provider_disables_autocommit: true   # pairs with hikari.auto-commit=false
+  flyway:
+    enabled: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: ${PORT:8080}
+  tomcat:
+    max: 300
+    max-connections: 35000
+    accept-count: 5000
+    connection-timeout: 30s
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState          # never touches the DB
+        readiness:
+          include: readinessState,dbReadiness
+  health:
+    db:
+      enabled: false                      # replaced by dbReadiness (separate 1-conn pool)
+  metrics:
+    tags:
+      application: seatbook
+
+logging:
+  structured:
+    format:
+      console: logstash                   # Spring Boot 3.4 built-in JSON logs (includes MDC)
+  level:
+    com.seatbook: INFO
+
+app:
+  jwt-secret: '3Jw/zgdEZ7FHPsBPySvKGpCN35pmlReubNzihnc4jVY='
+  admin-bootstrap-secret: ADMIN_KEY_PAYTM
+  dev-tokens-enabled: ${DEV_TOKENS_ENABLED:true}
+  default-per-user-limit: 4
+  max-seats-per-show: 100000
+  seat-lock:                # the only local cache; holds seat locks, nothing else
+    inflight-ttl: 90s       # > hikari connection-timeout (60s) + tx time
+    confirmed-ttl: 5s       # fast refusal window after a seat is confirmed
+    max-entries: 100000     # hard cap on JVM footprint
+  reconcile-interval: 5s

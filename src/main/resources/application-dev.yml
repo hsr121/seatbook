@@ -1,0 +1,11 @@
+# Run with SPRING_PROFILES_ACTIVE=dev while checking query counts per endpoint (N+1 hunt). Never in prod.
+spring:
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        generate_statistics: true
+        format_sql: false
+logging:
+  level:
+    org.hibernate.engine.internal.StatisticalLoggingSessionEventListener: DEBUG   # per-session "JDBC statements / batches" summary
