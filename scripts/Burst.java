@@ -86,7 +86,7 @@ public class Burst {
         long t = System.nanoTime();
         try (var ex = Executors.newVirtualThreadPerTaskExecutor()) {
             for (var j : jobs) ex.submit(j);
-            Thread.sleep(250); gate.countDown();
+                Thread.sleep(100);gate.countDown();
         }
         System.out.printf("%s: %d requests in %.1fs%n", name, jobs.size(), (System.nanoTime() - t) / 1e9 - 0.5);
     }

@@ -5,14 +5,12 @@ spring:
     virtual:
       enabled: true
   datasource:
-    # jdbc:sqlserver://<server>.database.windows.net:1433;database=seatbook;encrypt=true;loginTimeout=60;
-    #   connectRetryCount=3;connectRetryInterval=10;useBulkCopyForBatchInsert=true;sendStringParametersAsUnicode=false
-    url: jdbc:sqlserver://harshal-personal.database.windows.net:1433;database=free-sql-db-2009226;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
-    username: hsr121@harshal-personal
-    password: Harshal@123
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     hikari:
-      maximum-pool-size: 20        # small on purpose
-      connection-timeout: 60000    # waiting is fine, latency isn't a concern
+      maximum-pool-size: 60        # small on purpose
+      connection-timeout: 90000    # waiting is fine, latency isn't a concern
       minimum-idle: 10             # fixed-size pool, no cold connects mid-burst
       max-lifetime: 1500000        # recycle before Azure idle/gateway kills
       keepalive-time: 120000
@@ -32,6 +30,7 @@ spring:
           provider_disables_autocommit: true   # pairs with hikari.auto-commit=false
   flyway:
     enabled: true
+    connect-retries: 3
   jackson:
     property-naming-strategy: SNAKE_CASE
   lifecycle:
@@ -40,7 +39,7 @@ spring:
 server:
   port: ${PORT:8080}
   tomcat:
-    max: 300
+    max: 500
     max-connections: 35000
     accept-count: 5000
     connection-timeout: 30s
@@ -75,9 +74,9 @@ logging:
     com.seatbook: INFO
 
 app:
-  jwt-secret: '3Jw/zgdEZ7FHPsBPySvKGpCN35pmlReubNzihnc4jVY='
-  admin-bootstrap-secret: ADMIN_KEY_PAYTM
-  dev-tokens-enabled: ${DEV_TOKENS_ENABLED:true}
+  jwt-secret: ${JWT_SECRET}
+  admin-bootstrap-secret: ${ADMIN_BOOTSTRAP_SECRET}
+  dev-tokens-enabled: true
   default-per-user-limit: 4
   max-seats-per-show: 100000
   seat-lock:                # the only local cache; holds seat locks, nothing else
