@@ -5,6 +5,7 @@ Design: see `PLAN.md`. Write-up: `WRITEUP.md`.
 
 ## Run locally
 ```bash
+cp .env.example .env            # then fill in values
 docker compose up --build       # or: mvn spring-boot:run
 ```
 Azure SQL: create the database, add a firewall rule for the app host's outbound IPs, disable auto-pause for the demo.
